@@ -9,6 +9,7 @@ from src.entities.snake import Snake
 from src.entities.apple import generateApple
 
 pygame.init()
+pygame.display.set_caption('Snake')
  
 fpsClock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -34,11 +35,6 @@ class Game:
 
 
     def update(self):
-        """
-        INPUT: snake : Snake
-        OUTPUT: none
-        Update the game
-        """
         self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
         self.checkColisions()
         self.snake.move()
