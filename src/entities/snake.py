@@ -14,22 +14,22 @@ class Snake:
         self.speedy = 0
 
     def move_left(self):
-        if (self.rect[0] - self.speed > 0):
+        if (self.rect[0] - self.speed > 0) and (self.speedx != self.speed):
             self.speedx = -self.speed
             self.speedy = 0
 
     def move_right(self):
-        if (self.rect[0] + self.speed < WIDTH - self.rect[2]):
+        if (self.rect[0] + self.speed < WIDTH - self.rect[2]) and (self.speedx != -self.speed):
             self.speedx = self.speed
             self.speedy = 0
 
     def move_up(self):
-        if (self.rect[1] - self.speed > 0):
+        if (self.rect[1] - self.speed > 0) and (self.speedy != self.speed):
             self.speedy = -self.speed
             self.speedx = 0
 
     def move_down(self):
-        if (self.rect[1] + self.speed < HEIGHT - self.rect[3]):
+        if (self.rect[1] + self.speed < HEIGHT - self.rect[3]) and (self.speedy != -self.speed):
             self.speedy = self.speed
             self.speedx = 0
 
