@@ -3,7 +3,7 @@ import sys
 import pygame
 from pygame.locals import *
  
-from src.config import WIDTH, HEIGHT, FPS, SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED, BLACK, NB_APPLES , APPLE_SIZE, APPLE_COLOR, WHITE, SCORE_POS
+from src.config import WIDTH, HEIGHT, FPS, SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED, BLACK, NB_APPLES , APPLE_SIZE, APPLE_COLOR, WHITE, SCORE_POS, FONT_SIZE
 
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
@@ -14,7 +14,7 @@ fpsClock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 pygame.font.init()
-my_font = pygame.font.SysFont('Comic Sans MS', 50)
+my_font = pygame.font.SysFont('Comic Sans MS', FONT_SIZE)
 
 class Game:
 
@@ -41,9 +41,11 @@ class Game:
         """
         self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
         self.checkColisions()
+        self.snake.move()
 
     def draw(self):
         screen.fill(BLACK)
+        pygame.draw.rect(screen, WHITE, (0, FONT_SIZE, WIDTH, 1))
         self.snake.draw(screen)
         for apple in self.apples:
             apple.draw(screen)
