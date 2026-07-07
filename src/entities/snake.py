@@ -9,6 +9,7 @@ class Snake:
         self.color = color
         self.rect = [x, y, w, h]
         self.speed = speed
+        self.score = 0
 
     def move_left(self):
         if (self.rect[0] - self.speed > 0):
