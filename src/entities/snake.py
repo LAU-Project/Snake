@@ -10,22 +10,32 @@ class Snake:
         self.rect = [x, y, w, h]
         self.speed = speed
         self.score = 0
+        self.speedx = speed
+        self.speedy = 0
 
     def move_left(self):
         if (self.rect[0] - self.speed > 0):
-            self.rect[0] -= self.speed
+            self.speedx = -self.speed
+            self.speedy = 0
 
     def move_right(self):
         if (self.rect[0] + self.speed < WIDTH - self.rect[2]):
-            self.rect[0] += self.speed
+            self.speedx = self.speed
+            self.speedy = 0
 
     def move_up(self):
         if (self.rect[1] - self.speed > 0):
-            self.rect[1] -= self.speed
+            self.speedy = -self.speed
+            self.speedx = 0
 
     def move_down(self):
         if (self.rect[1] + self.speed < HEIGHT - self.rect[3]):
-            self.rect[1] += self.speed
+            self.speedy = self.speed
+            self.speedx = 0
+
+    def move(self):
+        self.rect[0] += self.speedx
+        self.rect[1] += self.speedy
 
     def health(self):
         print("The snake is " + ("alive" if self.isAlive() == True else "dead") + ".")
