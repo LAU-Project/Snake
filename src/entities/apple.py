@@ -1,11 +1,11 @@
 import pygame
 from random import randint
 
-from src.config import WIDTH, HEIGHT
+from src.config import WIDTH, HEIGHT, FONT_SIZE
 
 def generateApple(w, h, color):
     x = randint(0, WIDTH - w)
-    y = randint(0, HEIGHT - h)
+    y = randint(FONT_SIZE, HEIGHT - h)
     apple = Apple(x, y, w, h, color)
     return apple
 
