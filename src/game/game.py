@@ -33,11 +33,21 @@ class Game:
                 self.apples.pop(i)
                 self.snake.score += 1
 
+    def checkSnakeOutBound(self):
+        coords = self.snake.rect[0], self.snake.rect[1]
+
+        if (coords[0] < 0 or WIDTH < coords[0]):
+            self.snake.dead()
+        if (coords[1] < FONT_SIZE or HEIGHT < coords[1]):
+            self.snake.dead()
+
 
     def update(self):
         self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
         self.checkColisions()
-        self.snake.move()
+        self.checkSnakeOutBound()
+        if (self.snake.alive is True):
+            self.snake.move()
 
     def draw(self):
         screen.fill(BLACK)
