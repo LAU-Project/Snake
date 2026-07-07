@@ -3,8 +3,10 @@ import sys
 import pygame
 from pygame.locals import *
  
-from src.config import WIDTH, HEIGHT, FPS, SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED, BLACK
+from src.config import WIDTH, HEIGHT, FPS, SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED, BLACK, NB_APPLES , APPLE_SIZE, APPLE_COLOR
+
 from src.entities.snake import Snake
+from src.entities.apple import generateApple
 
 pygame.init()
  
@@ -14,7 +16,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 class Game:
 
     def __init__(self):
-        pass
+        self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
 
     def update(self):
         """
@@ -26,6 +28,8 @@ class Game:
 
     def draw(self):
         self.snake.draw(screen)
+        for apple in self.apples:
+            apple.draw(screen)
 
     def handleKeys(self):
         keys = pygame.key.get_pressed()
