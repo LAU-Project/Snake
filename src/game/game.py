@@ -121,8 +121,13 @@ my_font = pygame.font.SysFont('Comic Sans MS', FONT_SIZE)
 
 game = Game()
 
-menu = pygame_menu.Menu('Snake', WIDTH, HEIGHT, theme=pygame_menu.themes.THEME_DARK)
-menu.add.text_input('Name :', default='')
+menu_theme = pygame_menu.themes.THEME_DARK.copy()
+menu_theme.title_font_size = 80
+menu_theme.widget_font_size = 48
+menu_theme.widget_height = 70
+menu_theme.widget_width = 400
+
+menu = pygame_menu.Menu('Snake', WIDTH, HEIGHT, theme=menu_theme)
 menu.add.button('Play', game.gameLoop)
 menu.add.button('Quit', pygame_menu.events.EXIT)
 
