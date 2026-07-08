@@ -1,6 +1,8 @@
 import sys
  
 import pygame
+import pygame_menu
+
 from pygame.locals import *
  
 from src.config import FPS 
@@ -14,21 +16,6 @@ from src.config import FONT_SIZE
 
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
-
-pygame.init()
-pygame.display.set_caption('Snake')
- 
-fpsClock = pygame.time.Clock()
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
-pygame.font.init()
-my_font = pygame.font.SysFont('Comic Sans MS', FONT_SIZE)
-
-
-
-def deadScreen():
-    txt = my_font.render("YOU ARE DEAD!", False, WHITE)
-    screen.blit(txt, (WIDTH / 2 - (3 * FONT_SIZE), HEIGHT / 2 - FONT_SIZE))
 
 class Game:
 
@@ -59,11 +46,16 @@ class Game:
 
 
     def update(self):
-        self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
-        self.checkColisions()
-        self.checkSnakeOutBound()
-        if (self.snake.alive is True):
-            self.snake.move()
+        if self.state == MENU:
+            return
+        elif self.state == RUN:
+            self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
+            self.checkColisions()
+            self.checkSnakeOutBound()
+            if (self.snake.alive is True):
+                self.snake.move()
+        elif self.state == DEAD:
+            return
 
 
     def draw(self):
@@ -101,7 +93,6 @@ class Game:
 
     def gameLoop(self):
         self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
-
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -115,5 +106,26 @@ class Game:
             pygame.display.flip()
             fpsClock.tick(FPS)
 
+def deadScreen():
+    txt = my_font.render("YOU ARE DEAD!", False, WHITE)
+    screen.blit(txt, (WIDTH / 2 - (3 * FONT_SIZE), HEIGHT / 2 - FONT_SIZE))
+
+pygame.init()
+pygame.display.set_caption('Snake')
+ 
+fpsClock = pygame.time.Clock()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+pygame.font.init()
+my_font = pygame.font.SysFont('Comic Sans MS', FONT_SIZE)
+
 game = Game()
-game.gameLoop()
+
+menu = pygame_menu.Menu('Snake', WIDTH, HEIGHT, theme=pygame_menu.themes.THEME_DARK)
+menu.add.text_input('Name :', default='')
+menu.add.button('Play', game.gameLoop)
+menu.add.button('Quit', pygame_menu.events.EXIT)
+
+
+menu.mainloop(screen)
+# game.gameLoop()
