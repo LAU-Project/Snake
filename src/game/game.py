@@ -2,6 +2,7 @@ import sys
  
 import pygame
 import pygame_menu
+import requests
 
 from pygame.locals import *
  
@@ -13,6 +14,7 @@ from src.config import BLACK, WHITE
 from src.config import NB_APPLES , APPLE_SIZE, APPLE_COLOR
 from src.config import SCORE_POS
 from src.config import FONT_SIZE
+from src.config import FIREBASE_URL
 
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
@@ -23,12 +25,19 @@ class Game:
         self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
+        self.leaderboard = []
+        self.score_submitted = False
+        self.name = "Marvin"
+
+    def setName(self, name):
+        self.name = name
 
     def reset(self):
         self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
         self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
+        self.score_submitted = False
 
     def checkColisions(self):
         snake_rect = pygame.Rect(*self.snake.rect)
@@ -43,12 +52,13 @@ class Game:
     def checkSnakeOutBound(self):
         coords = self.snake.rect[0], self.snake.rect[1]
 
-        if (coords[0] < 0 or WIDTH < coords[0]):
+        if (coords[0] < 0 or WIDTH < coords[0]) or (coords[1] < FONT_SIZE or HEIGHT < coords[1]):
             self.snake.dead()
             self.state = DEAD
-        if (coords[1] < FONT_SIZE or HEIGHT < coords[1]):
-            self.snake.dead()
-            self.state = DEAD
+            if not self.score_submitted:
+                submit_score(self.name, self.snake.score)
+                self.leaderboard = get_leaderboard(10)
+                self.score_submitted = True
 
 
     def update(self):
@@ -77,7 +87,7 @@ class Game:
             screen.blit(self.score, SCORE_POS)
             return
         elif self.state == DEAD:
-            deadScreen()
+            deadScreen(self.leaderboard)
             return
 
 
@@ -119,11 +129,44 @@ class Game:
             pygame.display.flip()
             fpsClock.tick(FPS)
 
-def deadScreen():
+def submit_score(name, score):
+    """Envoie un score au leaderboard distant"""
+    data = {"name": name, "score": score}
+    try:
+        requests.post(FIREBASE_URL, json=data, timeout=5)
+    except requests.exceptions.RequestException as e:
+        print(f"Erreur envoi score: {e}")
+
+def get_leaderboard(top_n=10):
+    """Récupère le top N des scores, triés"""
+    try:
+        response = requests.get(FIREBASE_URL, timeout=5)
+        raw = response.json()
+        if not raw:
+            return []
+        scores = list(raw.values())
+        scores.sort(key=lambda x: x["score"], reverse=True)
+        return scores[:top_n]
+    except requests.exceptions.RequestException as e:
+        print(f"Erreur récupération leaderboard: {e}")
+        return []
+
+
+def deadScreen(leaderboard):
     txt = my_font.render("YOU ARE DEAD!", False, WHITE)
     screen.blit(txt, (WIDTH / 2 - (3 * FONT_SIZE), HEIGHT / 2 - FONT_SIZE))
     txt = my_font.render("PRESS R TO RESTART", False, WHITE)
     screen.blit(txt, (WIDTH / 2 - (4 * FONT_SIZE), HEIGHT - (FONT_SIZE * 4)))
+
+    y = 50
+    title = my_font.render("LEADERBOARD", True, (255, 255, 255))
+    screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, y))
+
+    for i, entry in enumerate(leaderboard):
+        y += 40
+        line = f"{i+1}. {entry['name']} - {entry['score']}"
+        text = my_font.render(line, True, (255, 255, 255))
+        screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
 
 pygame.init()
 pygame.display.set_caption('Snake')
@@ -143,6 +186,7 @@ menu_theme.widget_height = 70
 menu_theme.widget_width = 400
 
 menu = pygame_menu.Menu('Snake', WIDTH, HEIGHT, theme=menu_theme)
+menu.add.text_input('Name :', default='', onchange=game.setName)
 menu.add.button('Play', game.gameLoop)
 menu.add.button('Quit', pygame_menu.events.EXIT)
 
