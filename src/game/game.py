@@ -24,6 +24,12 @@ class Game:
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
 
+    def reset(self):
+        self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
+        self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
+        self.score = my_font.render('Score: 0', False, WHITE)
+        self.state = RUN
+
     def checkColisions(self):
         snake_rect = pygame.Rect(*self.snake.rect)
 
@@ -82,14 +88,21 @@ class Game:
             pygame.quit()
             sys.exit()
 
-        if keys[pygame.K_LEFT]:
-            self.snake.move_left()
-        elif keys[pygame.K_RIGHT]:
-            self.snake.move_right()
-        elif keys[pygame.K_UP]:
-            self.snake.move_up()
-        elif keys[pygame.K_DOWN]:
-            self.snake.move_down()
+        if self.state == MENU:
+                return
+        elif self.state == DEAD:
+                if keys[pygame.K_r]:
+                    self.reset()
+        elif self.state == RUN:
+                if keys[pygame.K_LEFT]:
+                    self.snake.move_left()
+                elif keys[pygame.K_RIGHT]:
+                    self.snake.move_right()
+                elif keys[pygame.K_UP]:
+                    self.snake.move_up()
+                elif keys[pygame.K_DOWN]:
+                    self.snake.move_down()
+                return
 
     def gameLoop(self):
         self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
@@ -109,6 +122,8 @@ class Game:
 def deadScreen():
     txt = my_font.render("YOU ARE DEAD!", False, WHITE)
     screen.blit(txt, (WIDTH / 2 - (3 * FONT_SIZE), HEIGHT / 2 - FONT_SIZE))
+    txt = my_font.render("PRESS R TO RESTART", False, WHITE)
+    screen.blit(txt, (WIDTH / 2 - (4 * FONT_SIZE), HEIGHT - (FONT_SIZE * 4)))
 
 pygame.init()
 pygame.display.set_caption('Snake')
