@@ -50,6 +50,7 @@ class Game:
             if snake_rect.colliderect(apple_rect):
                 self.apples.pop(i)
                 self.snake.score += 1
+                self.apples.append(generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR))
 
     def checkSnakeOutBound(self):
         coords = self.snake.rect[0], self.snake.rect[1]
