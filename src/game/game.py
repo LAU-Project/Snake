@@ -15,6 +15,7 @@ from src.config import NB_APPLES , APPLE_SIZE, APPLE_COLOR
 from src.config import SCORE_POS
 from src.config import FONT_SIZE
 from src.config import FIREBASE_URL
+from src.config import MUSIC
 
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
@@ -38,6 +39,7 @@ class Game:
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
         self.score_submitted = False
+        pygame.mixer.music.stop()
 
     def checkColisions(self):
         snake_rect = pygame.Rect(*self.snake.rect)
@@ -103,6 +105,9 @@ class Game:
         elif self.state == DEAD:
                 if keys[pygame.K_r]:
                     self.reset()
+                if keys[pygame.K_BACKSPACE]:
+                    self.reset()
+                    menu.mainloop(screen)
         elif self.state == RUN:
                 if keys[pygame.K_LEFT]:
                     self.snake.move_left()
@@ -115,6 +120,7 @@ class Game:
                 return
 
     def gameLoop(self):
+        pygame.mixer.music.play()
         self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
         while True:
             for event in pygame.event.get():
@@ -128,6 +134,10 @@ class Game:
 
             pygame.display.flip()
             fpsClock.tick(FPS)
+
+    def setVolume(self, value):
+        self.volume = value
+        pygame.mixer.music.set_volume(value / 100)
 
 def submit_score(name, score):
     """Envoie un score au leaderboard distant"""
@@ -150,7 +160,6 @@ def get_leaderboard(top_n=10):
     except requests.exceptions.RequestException as e:
         print(f"Erreur récupération leaderboard: {e}")
         return []
-
 
 def deadScreen(leaderboard):
     txt = my_font.render("YOU ARE DEAD!", False, WHITE)
@@ -186,9 +195,20 @@ menu_theme.widget_height = 70
 menu_theme.widget_width = 400
 
 menu = pygame_menu.Menu('Snake', WIDTH, HEIGHT, theme=menu_theme)
+
 menu.add.text_input('Name :', default='', onchange=game.setName)
 menu.add.button('Play', game.gameLoop)
+menu.add.selector(
+    'Music :',
+    [(f'{v}', v) for v in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]],
+    onchange=lambda selected, value: game.setVolume(value)
+)
 menu.add.button('Quit', pygame_menu.events.EXIT)
+
+
+pygame.mixer.init()
+pygame.mixer.music.load(MUSIC)
+pygame.mixer.music.set_volume(0.1)
 
 
 menu.mainloop(screen)
