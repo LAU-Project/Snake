@@ -21,3 +21,5 @@ FONT_SIZE = 50
 MENU = 0
 RUN = 1
 DEAD = 2
+
+FIREBASE_URL = "https://snake-b13b1-default-rtdb.europe-west1.firebasedatabase.app/scores.json"
