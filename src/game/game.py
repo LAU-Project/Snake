@@ -3,7 +3,14 @@ import sys
 import pygame
 from pygame.locals import *
  
-from src.config import WIDTH, HEIGHT, FPS, SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED, BLACK, NB_APPLES , APPLE_SIZE, APPLE_COLOR, WHITE, SCORE_POS, FONT_SIZE
+from src.config import FPS 
+from src.config import MENU, RUN, DEAD
+from src.config import WIDTH, HEIGHT
+from src.config import SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED
+from src.config import BLACK, WHITE
+from src.config import NB_APPLES , APPLE_SIZE, APPLE_COLOR
+from src.config import SCORE_POS
+from src.config import FONT_SIZE
 
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
@@ -17,11 +24,18 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.font.init()
 my_font = pygame.font.SysFont('Comic Sans MS', FONT_SIZE)
 
+
+
+def deadScreen():
+    txt = my_font.render("YOU ARE DEAD!", False, WHITE)
+    screen.blit(txt, (WIDTH / 2 - (3 * FONT_SIZE), HEIGHT / 2 - FONT_SIZE))
+
 class Game:
 
     def __init__(self):
         self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
         self.score = my_font.render('Score: 0', False, WHITE)
+        self.state = RUN
 
     def checkColisions(self):
         snake_rect = pygame.Rect(*self.snake.rect)
@@ -38,8 +52,10 @@ class Game:
 
         if (coords[0] < 0 or WIDTH < coords[0]):
             self.snake.dead()
+            self.state = DEAD
         if (coords[1] < FONT_SIZE or HEIGHT < coords[1]):
             self.snake.dead()
+            self.state = DEAD
 
 
     def update(self):
@@ -49,13 +65,23 @@ class Game:
         if (self.snake.alive is True):
             self.snake.move()
 
+
     def draw(self):
         screen.fill(BLACK)
-        pygame.draw.rect(screen, WHITE, (0, FONT_SIZE, WIDTH, 1))
-        self.snake.draw(screen)
-        for apple in self.apples:
-            apple.draw(screen)
-        screen.blit(self.score, SCORE_POS)
+
+        if self.state == MENU:
+            return
+        elif self.state == RUN:
+            pygame.draw.rect(screen, WHITE, (0, FONT_SIZE, WIDTH, 1))
+            self.snake.draw(screen)
+            for apple in self.apples:
+                apple.draw(screen)
+            screen.blit(self.score, SCORE_POS)
+            return
+        elif self.state == DEAD:
+            deadScreen()
+            return
+
 
     def handleKeys(self):
         keys = pygame.key.get_pressed()
