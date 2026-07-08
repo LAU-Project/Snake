@@ -1,17 +1,18 @@
 import sys
- 
+import threading
+
 import pygame
 import pygame_menu
 import requests
 
 from pygame.locals import *
- 
-from src.config import FPS 
+
+from src.config import FPS
 from src.config import MENU, RUN, DEAD
 from src.config import WIDTH, HEIGHT
-from src.config import SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED
+from src.config import SNAKE_COLOR, BODY_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SPEED
 from src.config import BLACK, WHITE
-from src.config import NB_APPLES , APPLE_SIZE, APPLE_COLOR
+from src.config import NB_APPLES, APPLE_SIZE, APPLE_COLOR
 from src.config import SCORE_POS
 from src.config import FONT_SIZE
 from src.config import FIREBASE_URL
@@ -20,22 +21,22 @@ from src.config import MUSIC
 from src.entities.snake import Snake
 from src.entities.apple import generateApple
 
+
 class Game:
 
     def __init__(self):
         self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
+        self.score_value = 0
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
         self.leaderboard = []
         self.score_submitted = False
         self.name = "Marvin"
 
-    def setName(self, name):
-        self.name = name
-
     def reset(self):
-        self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
+        self.snake = Snake(SNAKE_COLOR, BODY_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
         self.apples = [generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR) for _ in range(NB_APPLES)]
+        self.score_value = 0
         self.score = my_font.render('Score: 0', False, WHITE)
         self.state = RUN
         self.score_submitted = False
@@ -46,36 +47,39 @@ class Game:
 
         for i in range(len(self.apples) - 1, -1, -1):
             apple = self.apples[i]
-            apple_rect = pygame.Rect(*apple.rect)
-            if snake_rect.colliderect(apple_rect):
+            if snake_rect.colliderect(apple.rect):
                 self.apples.pop(i)
                 self.snake.score += 1
                 self.apples.append(generateApple(APPLE_SIZE, APPLE_SIZE, APPLE_COLOR))
 
     def checkSnakeOutBound(self):
-        coords = self.snake.rect[0], self.snake.rect[1]
+        x, y = self.snake.rect[0], self.snake.rect[1]
 
-        if (coords[0] < 0 or WIDTH < coords[0]) or (coords[1] < FONT_SIZE or HEIGHT < coords[1]):
+        if (x < 0 or WIDTH < x) or (y < FONT_SIZE or HEIGHT < y):
             self.snake.dead()
             self.state = DEAD
             if not self.score_submitted:
-                submit_score(self.name, self.snake.score)
-                self.leaderboard = get_leaderboard(10)
                 self.score_submitted = True
+                threading.Thread(target=self.fetchLeaderboard, daemon=True).start()
 
+    def fetchLeaderboard(self):
+        submit_score(self.name, self.snake.score)
+        self.leaderboard = get_leaderboard(10)
 
     def update(self):
         if self.state == MENU:
             return
         elif self.state == RUN:
-            self.score = my_font.render('Score: ' + str(self.snake.score), False, WHITE)
+            if self.snake.score != self.score_value:
+                self.score_value = self.snake.score
+                self.score = my_font.render('Score: ' + str(self.score_value), False, WHITE)
             self.checkColisions()
             self.checkSnakeOutBound()
-            if (self.snake.alive is True):
+            if self.snake.alive:
                 self.snake.move()
+                self.snake.update_body()
         elif self.state == DEAD:
             return
-
 
     def draw(self):
         screen.fill(BLACK)
@@ -93,7 +97,6 @@ class Game:
             deadScreen(self.leaderboard)
             return
 
-
     def handleKeys(self):
         keys = pygame.key.get_pressed()
 
@@ -102,33 +105,33 @@ class Game:
             sys.exit()
 
         if self.state == MENU:
-                return
+            return
         elif self.state == DEAD:
-                if keys[pygame.K_r]:
-                    self.reset()
-                if keys[pygame.K_BACKSPACE]:
-                    self.reset()
-                    menu.mainloop(screen)
+            if keys[pygame.K_r]:
+                self.reset()
+            if keys[pygame.K_BACKSPACE]:
+                self.reset()
+                menu.mainloop(screen)
         elif self.state == RUN:
-                if keys[pygame.K_LEFT]:
-                    self.snake.move_left()
-                elif keys[pygame.K_RIGHT]:
-                    self.snake.move_right()
-                elif keys[pygame.K_UP]:
-                    self.snake.move_up()
-                elif keys[pygame.K_DOWN]:
-                    self.snake.move_down()
-                return
+            if keys[pygame.K_LEFT]:
+                self.snake.move_left()
+            elif keys[pygame.K_RIGHT]:
+                self.snake.move_right()
+            elif keys[pygame.K_UP]:
+                self.snake.move_up()
+            elif keys[pygame.K_DOWN]:
+                self.snake.move_down()
+            return
 
     def gameLoop(self):
         pygame.mixer.music.play()
-        self.snake = Snake(SNAKE_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
+        self.snake = Snake(SNAKE_COLOR, BODY_COLOR, SNAKE_X, SNAKE_Y, SNAKE_SIZE, SNAKE_SIZE, SNAKE_SPEED)
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-            
+
             self.handleKeys()
             self.update()
             self.draw()
@@ -140,6 +143,10 @@ class Game:
         self.volume = value
         pygame.mixer.music.set_volume(value / 100)
 
+    def setName(self, name):
+        self.name = name
+
+
 def submit_score(name, score):
     """Envoie un score au leaderboard distant"""
     data = {"name": name, "score": score}
@@ -147,6 +154,7 @@ def submit_score(name, score):
         requests.post(FIREBASE_URL, json=data, timeout=5)
     except requests.exceptions.RequestException as e:
         print(f"Erreur envoi score: {e}")
+
 
 def get_leaderboard(top_n=10):
     """Récupère le top N des scores, triés"""
@@ -161,6 +169,7 @@ def get_leaderboard(top_n=10):
     except requests.exceptions.RequestException as e:
         print(f"Erreur récupération leaderboard: {e}")
         return []
+
 
 def deadScreen(leaderboard):
     txt = my_font.render("YOU ARE DEAD!", False, WHITE)
@@ -178,9 +187,10 @@ def deadScreen(leaderboard):
         text = my_font.render(line, True, (255, 255, 255))
         screen.blit(text, (screen.get_width() // 2 - text.get_width() // 2, y))
 
+
 pygame.init()
 pygame.display.set_caption('Snake')
- 
+
 fpsClock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -206,11 +216,8 @@ menu.add.selector(
 )
 menu.add.button('Quit', pygame_menu.events.EXIT)
 
-
 pygame.mixer.init()
 pygame.mixer.music.load(MUSIC)
 pygame.mixer.music.set_volume(0.1)
 
-
 menu.mainloop(screen)
-# game.gameLoop()
